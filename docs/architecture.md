@@ -18,6 +18,8 @@ Rather than functioning as a simplistic binary classifier or a superficial LLM w
 
 ## 2. System Architecture
 
+![PhishGuard System Architecture](images/architecture_diagram.jpg)
+
 ```mermaid
 flowchart TD
     subgraph Client ["Client Presentation Layer"]
