@@ -1,0 +1,38 @@
+# Environments & Dependencies
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Machine Learning Artifacts (keep models tracked via DVC or lightweight releases)
+*.joblib
+*.pkl
+ml/models/cache/
+*.parquet
+
+# Logs & Runtime
+*.log
+logs/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Environment configs
+.env
+.env.local
+.env.production
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

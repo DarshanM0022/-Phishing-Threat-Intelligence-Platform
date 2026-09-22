@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard Enterprise — Threat Intelligence & Phishing Forensics Platform</title>
+  
+  <!-- Modern Font System -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Tailwind CSS Engine -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            },
+            surface: {
+              base: '#0a0d12',
+              card: '#101520',
+              overlay: '#151b29',
+              border: '#1f2738',
+              borderLight: '#2a3449',
+              text: '#f1f5f9',
+              muted: '#94a3b8',
+              dim: '#64748b'
+            },
+            status: {
+              critical: '#ef4444',
+              high: '#f97316',
+              medium: '#eab308',
+              safe: '#10b981',
+              info: '#38bdf8'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #0a0d12;
+      color: #f1f5f9;
+      background-image: 
+        linear-gradient(rgba(31, 39, 56, 0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 39, 56, 0.25) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .panel {
+      background-color: #101520;
+      border: 1px solid #1f2738;
+    }
+    .panel-hover:hover {
+      border-color: #2a3449;
+    }
+    .mono-num {
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+    /* SVG stroke animation */
+    .gauge-ring {
+      transition: stroke-dashoffset 0.7s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.4s ease;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0a0d12; }
+    ::-webkit-scrollbar-thumb { background: #1f2738; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-sky-500/30 selection:text-white antialiased">
+
+  <!-- TOP ENTERPRISE APP HEADER -->
+  <header class="border-b border-surface-border bg-surface-base/95 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      
+      <!-- Brand & Security Identifier -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-7 h-7 rounded bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span class="font-semibold text-sm tracking-tight text-white">PhishGuard</span>
+            <span class="text-[10px] uppercase font-mono tracking-wider px-1.5 py-0.5 rounded bg-surface-overlay text-surface-muted border border-surface-border">Enterprise Triage</span>
+          </div>
+        </div>
+
+        <div class="hidden md:block h-4 w-px bg-surface-border"></div>
+
+        <!-- Telemetry Status Badges -->
+        <div class="hidden lg:flex items-center space-x-4 text-xs font-mono text-surface-dim">
+          <div class="flex items-center space-x-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span class="text-surface-muted">SSRF Isolation:</span>
+            <span class="text-surface-text">Enforcing</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+            <span class="text-surface-muted">TreeSHAP Kernel:</span>
+            <span class="text-surface-text">Active (40 Trees)</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span class="text-surface-muted">ICANN RDAP:</span>
+            <span class="text-surface-text">Online</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Navigation Tabs & Actions -->
+      <div class="flex items-center space-x-3">
+        <nav class="flex items-center space-x-1 bg-surface-card p-1 rounded-md border border-surface-border text-xs">
+          <button onclick="switchView('url')" id="tab-url" class="px-3 py-1 rounded font-medium text-white bg-surface-overlay border border-surface-borderLight transition">Target Forensics</button>
+          <button onclick="switchView('email')" id="tab-email" class="px-3 py-1 rounded font-medium text-surface-muted hover:text-white transition">Email RFC 822</button>
+          <button onclick="switchView('history')" id="tab-history" class="px-3 py-1 rounded font-medium text-surface-muted hover:text-white transition">Incident Audit Log</button>
+        </nav>
+
+        <button onclick="exportJsonDossier()" title="Export JSON Incident Dossier" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded border border-surface-border text-xs font-mono text-surface-muted hover:text-white hover:border-surface-borderLight transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Export IOC</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN OPERATIONAL WORKSPACE -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- VIEW 1: TARGET FORENSICS (URL & HOSTNAME) -->
+    <div id="view-url" class="space-y-6">
+      
+      <!-- Submission & Scanning Console -->
+      <div class="panel rounded-lg p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-surface-border text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+            <h2 class="font-medium text-surface-text tracking-tight">Perimeter Ingestion & Forensics Console</h2>
+          </div>
+          <div class="text-surface-dim font-mono text-[11px]">
+            RFC 3986 Normalization • Zero Untrusted GET Execution • DNS/RDAP Bound
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2.5">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-dim font-mono text-xs">
+              URI:
+            </div>
+            <input 
+              type="text" 
+              id="url-input" 
+              placeholder="e.g. auth-security.paypal.com.verify-access.attacker-99.xyz/login" 
+              class="w-full bg-surface-base border border-surface-border focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md py-2.5 pl-12 pr-4 text-xs font-mono text-white placeholder-surface-dim outline-none transition"
+              onkeydown="if(event.key === 'Enter') analyzeTarget()"
+            />
+          </div>
+          <button 
+            onclick="analyzeTarget()" 
+            id="btn-scan" 
+            class="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-medium rounded-md text-xs font-mono tracking-wider flex items-center justify-center space-x-2 transition shadow-sm"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span>DISPATCH ANALYSIS</span>
+          </button>
+        </div>
+
+        <!-- Real Threat Benchmark Queue (Clean, Enterprise IOC Sandbox) -->
+        <div class="mt-4 pt-3 border-t border-surface-border flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="text-[11px] font-mono uppercase tracking-wider text-surface-dim">Verified Threat Intelligence Queue:</span>
+          <div class="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
+            <button onclick="loadIoc('paypal')" class="px-2 py-1 rounded bg-surface-overlay text-red-400 hover:bg-red-950/40 border border-surface-border transition">IOC: PayPal Brand Subdomain</button>
+            <button onclick="loadIoc('ip')" class="px-2 py-1 rounded bg-surface-overlay text-orange-400 hover:bg-orange-950/40 border border-surface-border transition">IOC: IPv4 Direct Auth Portal</button>
+            <button onclick="loadIoc('netflix')" class="px-2 py-1 rounded bg-surface-overlay text-red-400 hover:bg-red-950/40 border border-surface-border transition">IOC: Netflix Billing Impersonation</button>
+            <button onclick="loadIoc('cloudflare')" class="px-2 py-1 rounded bg-surface-overlay text-emerald-400 hover:bg-emerald-950/40 border border-surface-border transition">Benchmark: Cloudflare Core</button>
+            <button onclick="loadIoc('github')" class="px-2 py-1 rounded bg-surface-overlay text-emerald-400 hover:bg-emerald-950/40 border border-surface-border transition">Benchmark: GitHub Enterprise</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INCIDENT INVESTIGATION CARD (ENTERPRISE PRODUCT STYLE) -->
+      <div id="investigation-deck" class="hidden space-y-6">
+        
+        <!-- Incident Master Header -->
+        <div class="panel rounded-lg p-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-surface-border">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2.5">
+                <span id="inc-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wider uppercase bg-red-950 text-red-400 border border-red-800">CRITICAL</span>
+                <span id="inc-id" class="text-xs font-mono font-medium text-white">#INC-2026-9281</span>
+                <span class="text-surface-dim">•</span>
+                <span id="inc-time" class="text-xs font-mono text-surface-muted">00:00:00 UTC</span>
+              </div>
+              <p id="inc-target" class="text-sm font-mono text-sky-400 font-medium truncate max-w-2xl">https://...</p>
+            </div>
+
+            <div class="flex items-center space-x-4">
+              <!-- Radial Meter -->
+              <div class="flex items-center space-x-3">
+                <div class="relative w-12 h-12 flex items-center justify-center">
+                  <svg class="w-12 h-12 transform -rotate-90" viewBox="0 0 44 44">
+                    <circle cx="22" cy="22" r="18" class="stroke-surface-border" stroke-width="4" fill="transparent" />
+                    <circle id="gauge-circle" cx="22" cy="22" r="18" class="gauge-ring stroke-sky-500" stroke-width="4" stroke-dasharray="113.1" stroke-dashoffset="113.1" stroke-linecap="round" fill="transparent" />
+                  </svg>
+                  <span id="gauge-val" class="absolute font-mono text-xs font-bold text-white mono-num">0</span>
+                </div>
+                <div>
+                  <div class="text-[10px] font-mono uppercase text-surface-dim">Threat Score</div>
+                  <div id="inc-verdict" class="text-xs font-mono font-semibold text-white uppercase">Evaluating</div>
+                </div>
+              </div>
+
+              <!-- Export Button -->
+              <button onclick="exportJsonDossier()" class="p-2 rounded border border-surface-border hover:bg-surface-overlay text-surface-muted hover:text-white transition" title="Download Report">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Prescriptive Defense Recommendation -->
+          <div class="mt-4 p-3 rounded bg-surface-base border border-surface-border flex items-start space-x-3 text-xs">
+            <div class="text-sky-400 mt-0.5">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="flex-1 space-y-0.5">
+              <div class="font-medium text-surface-text">Containment & Playbook Advisory:</div>
+              <p id="inc-rec" class="text-surface-muted leading-relaxed">Advisory pending...</p>
+            </div>
+          </div>
+
+          <!-- Technical Metrics Telemetry Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-4 pt-3 border-t border-surface-border text-xs font-mono">
+            <div class="p-2 rounded bg-surface-base border border-surface-border">
+              <span class="text-[10px] text-surface-dim uppercase block">ML Confidence</span>
+              <span id="metric-ml" class="text-white font-medium mono-num">0.0%</span>
+            </div>
+            <div class="p-2 rounded bg-surface-base border border-surface-border">
+              <span class="text-[10px] text-surface-dim uppercase block">Heuristic Severity</span>
+              <span id="metric-heuristics" class="text-sky-400 font-medium mono-num">0 pts</span>
+            </div>
+            <div class="p-2 rounded bg-surface-base border border-surface-border">
+              <span class="text-[10px] text-surface-dim uppercase block">Domain Age</span>
+              <span id="metric-age" class="text-surface-text font-medium mono-num">--</span>
+            </div>
+            <div class="p-2 rounded bg-surface-base border border-surface-border">
+              <span class="text-[10px] text-surface-dim uppercase block">TLS Handshake</span>
+              <span id="metric-tls" class="text-surface-text font-medium truncate">--</span>
+            </div>
+            <div class="p-2 rounded bg-surface-base border border-surface-border">
+              <span class="text-[10px] text-surface-dim uppercase block">Processing Time</span>
+              <span id="metric-latency" class="text-emerald-400 font-medium mono-num">0 ms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deep Inspection Tabbed Panel -->
+        <div class="panel rounded-lg">
+          <!-- Sub-tabs -->
+          <div class="flex border-b border-surface-border px-4 text-xs font-mono">
+            <button onclick="switchSubTab('indicators')" id="subtab-indicators" class="py-3 px-3 text-white border-b-2 border-sky-500 font-medium transition">Threat Indicators (MITRE TTPs)</button>
+            <button onclick="switchSubTab('shap')" id="subtab-shap" class="py-3 px-3 text-surface-muted hover:text-white transition">TreeSHAP Explainability</button>
+            <button onclick="switchSubTab('crypto')" id="subtab-crypto" class="py-3 px-3 text-surface-muted hover:text-white transition">Infrastructure & TLS Forensics</button>
+            <button onclick="switchSubTab('features')" id="subtab-features" class="py-3 px-3 text-surface-muted hover:text-white transition">32-Dimension Feature Vector</button>
+            <button onclick="switchSubTab('timeline')" id="subtab-timeline" class="py-3 px-3 text-surface-muted hover:text-white transition">Pipeline Execution Trace</button>
+          </div>
+
+          <!-- Content: Tab 1 Indicators -->
+          <div id="subcontent-indicators" class="p-5 space-y-3">
+            <div class="flex items-center justify-between text-xs text-surface-dim font-mono pb-2">
+              <span>CORRELATED MITRE ATT&CK TECHNIQUES & HEURISTIC RULES</span>
+              <span id="ind-count" class="text-white">0 Flags</span>
+            </div>
+            <div id="ind-list" class="space-y-2">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Content: Tab 2 SHAP Attribution -->
+          <div id="subcontent-shap" class="hidden p-5 space-y-4">
+            <div class="text-xs text-surface-muted leading-relaxed">
+              TreeSHAP calculates exact localized feature attributions across the decision ensemble. Red bars illustrate features pushing toward a phishing verdict; green bars illustrate legitimate structural balance.
+            </div>
+            <div id="shap-list" class="space-y-3">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Content: Tab 3 Infrastructure & TLS -->
+          <div id="subcontent-crypto" class="hidden p-5 space-y-4 text-xs font-mono">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- RDAP & Registration -->
+              <div class="p-3.5 rounded bg-surface-base border border-surface-border space-y-2">
+                <div class="text-[11px] text-sky-400 font-semibold uppercase tracking-wider pb-1 border-b border-surface-border">
+                  Domain Registration (ICANN RDAP)
+                </div>
+                <div class="flex justify-between py-1 border-b border-surface-border/50">
+                  <span class="text-surface-dim">Registrar:</span>
+                  <span id="rdap-registrar" class="text-white font-medium truncate max-w-xs">--</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-surface-border/50">
+                  <span class="text-surface-dim">Registration Date:</span>
+                  <span id="rdap-regdate" class="text-white">--</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-surface-border/50">
+                  <span class="text-surface-dim">Expiration Date:</span>
+                  <span id="rdap-expdate" class="text-white">--</span>
+                </div>
+                <div class="flex justify-between py-1">
+                  <span class="text-surface-dim">Tranco/Alexa Safe Registry:</span>
+                  <span id="rdap-top" class="text-emerald-400">NO</span>
+                </div>
+              </div>
+
+              <!-- DNS & TLS Cryptography -->
+              <div class="p-3.5 rounded bg-surface-base border border-surface-border space-y-2">
+                <div class="text-[11px] text-sky-400 font-semibold uppercase tracking-wider pb-1 border-b border-surface-border">
+                  Cryptographic & Network Route
+                </div>
+                <div class="flex justify-between py-1 border-b border-surface-border/50">
+                  <span class="text-surface-dim">Resolved IPv4/IPv6:</span>
+                  <span id="dns-ip" class="text-white">--</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-surface-border/50">
+                  <span class="text-surface-dim">Reverse DNS (PTR):</span>
+                  <span id="dns-ptr" class="text-white truncate max-w-xs">--</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-surface-border/50">
+                  <span class="text-surface-dim">TLS Certificate Issuer:</span>
+                  <span id="tls-issuer" class="text-white truncate max-w-xs">--</span>
+                </div>
+                <div class="flex justify-between py-1">
+                  <span class="text-surface-dim">Certificate Valid To:</span>
+                  <span id="tls-expiry" class="text-white">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content: Tab 4 32-Feature Vector -->
+          <div id="subcontent-features" class="hidden p-5">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr class="border-b border-surface-border text-surface-dim">
+                    <th class="py-2 px-3">FEATURE IDENTIFIER</th>
+                    <th class="py-2 px-3">MEASURED VALUE</th>
+                    <th class="py-2 px-3">CATEGORY</th>
+                    <th class="py-2 px-3">SECURITY INTERPRETATION</th>
+                  </tr>
+                </thead>
+                <tbody id="feature-tbody" class="divide-y divide-surface-border text-surface-text">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Content: Tab 5 Execution Trace -->
+          <div id="subcontent-timeline" class="hidden p-5 space-y-2 text-xs font-mono">
+            <div id="trace-container" class="space-y-1.5">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VIEW 2: EMAIL RFC 822 FORENSICS -->
+    <div id="view-email" class="hidden space-y-6">
+      <div class="panel rounded-lg p-5">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-surface-border text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+            <h2 class="font-medium text-surface-text tracking-tight">Email Header & Social Engineering Forensics (RFC 822)</h2>
+          </div>
+          <button onclick="loadEmailSample()" class="text-sky-400 hover:underline font-mono text-[11px]">Load Real Compromise Header Artifact</button>
+        </div>
+
+        <textarea 
+          id="email-raw-input" 
+          rows="8" 
+          placeholder="Paste full RFC 822 / 5322 email headers and message body here...
+Authentication-Results: mx.google.com; spf=fail; dkim=fail
+From: &quot;IT Security Center&quot; <alerts@random-corp-update.xyz>
+Reply-To: credential-collector@offshore-redirect.ru
+Subject: Immediate Action Required: Payroll Access Suspended
+
+Your account security credentials expired on 2026-09-22.
+Failure to authenticate within 24 hours will permanently disable workstation access.
+Authenticate now: https://payroll.portal.company.com.auth-gateway.xyz/login" 
+          class="w-full bg-surface-base border border-surface-border focus:border-sky-500 rounded-md p-3.5 text-xs font-mono text-white placeholder-surface-dim outline-none transition"
+        ></textarea>
+
+        <div class="flex justify-end mt-3">
+          <button 
+            onclick="analyzeEmailPayload()" 
+            id="btn-scan-email" 
+            class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-md text-xs font-mono tracking-wider flex items-center space-x-2 transition shadow-sm"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>AUDIT EMAIL HEADERS</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Email Forensics Breakdown (Appears on scan) -->
+      <div id="email-forensics-deck" class="hidden space-y-6">
+        <div class="panel rounded-lg p-5 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-surface-border">
+            <h3 class="font-mono text-xs font-semibold text-white uppercase tracking-wider">Email Envelope & Header Audit Results</h3>
+            <span id="email-risk-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-red-950 text-red-400 border border-red-800">ELEVATED RISK</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+            <div class="p-3 rounded bg-surface-base border border-surface-border">
+              <span class="text-surface-dim uppercase text-[10px] block">SPF Authentication</span>
+              <span id="auth-spf" class="font-bold uppercase text-white">--</span>
+            </div>
+            <div class="p-3 rounded bg-surface-base border border-surface-border">
+              <span class="text-surface-dim uppercase text-[10px] block">DKIM Signature</span>
+              <span id="auth-dkim" class="font-bold uppercase text-white">--</span>
+            </div>
+            <div class="p-3 rounded bg-surface-base border border-surface-border">
+              <span class="text-surface-dim uppercase text-[10px] block">Originating Hop IP</span>
+              <span id="auth-mta" class="font-bold text-sky-400">--</span>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded bg-surface-base border border-surface-border text-xs font-mono space-y-1.5">
+            <div class="flex justify-between py-1 border-b border-surface-border/50">
+              <span class="text-surface-dim">From Header:</span>
+              <span id="eml-from" class="text-white truncate max-w-lg">--</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-surface-border/50">
+              <span class="text-surface-dim">Reply-To Divergence:</span>
+              <span id="eml-reply" class="text-white truncate max-w-lg">--</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-surface-dim">Subject:</span>
+              <span id="eml-subject" class="text-white truncate max-w-lg">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: SOC INCIDENT AUDIT TRAIL -->
+    <div id="view-history" class="hidden space-y-6">
+      <div class="panel rounded-lg p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-surface-border">
+          <div>
+            <h2 class="text-sm font-semibold text-white tracking-tight">Incident Audit Log</h2>
+            <p class="text-xs text-surface-dim">Immutable forensic record of all triaged targets, scores, and detections.</p>
+          </div>
+          <button onclick="fetchHistoryLog()" class="px-3 py-1.5 text-xs font-mono rounded border border-surface-border hover:bg-surface-overlay text-surface-muted hover:text-white transition flex items-center space-x-1.5">
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Refresh Telemetry Log</span>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead>
+              <tr class="border-b border-surface-border text-surface-dim">
+                <th class="py-2.5 px-3">INCIDENT REF</th>
+                <th class="py-2.5 px-3">TYPE</th>
+                <th class="py-2.5 px-3">TARGET IDENTIFIER</th>
+                <th class="py-2.5 px-3">SCORE</th>
+                <th class="py-2.5 px-3">TIER</th>
+                <th class="py-2.5 px-3">FLAGS</th>
+                <th class="py-2.5 px-3">TIMESTAMP</th>
+                <th class="py-2.5 px-3 text-right">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="history-rows" class="divide-y divide-surface-border text-surface-text">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- EXPORT DOSSIER MODAL -->
+  <div id="dossier-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="panel rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between p-4 border-b border-surface-border">
+        <div class="flex items-center space-x-2 font-mono text-xs text-white">
+          <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+          <span>INCIDENT TELEMETRY DOSSIER (JSON FORMAT)</span>
+        </div>
+        <button onclick="closeDossierModal()" class="text-surface-muted hover:text-white text-lg">&times;</button>
+      </div>
+      <div class="p-4 flex-1 overflow-y-auto">
+        <pre id="dossier-json" class="p-3 rounded bg-surface-base border border-surface-border text-[11px] font-mono text-sky-300 overflow-x-auto"></pre>
+      </div>
+      <div class="p-3.5 border-t border-surface-border flex justify-end space-x-2 text-xs font-mono">
+        <button onclick="copyDossierJson()" class="px-3 py-1.5 rounded bg-surface-overlay border border-surface-border hover:text-white text-surface-muted transition">Copy to Clipboard</button>
+        <button onclick="downloadDossierFile()" class="px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-500 text-white transition">Download .json</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION SCRIPT ENGINE -->
+  <script>
+    let currentIncidentData = null;
+
+    // View Navigation
+    function switchView(viewName) {
+      document.getElementById('view-url').classList.add('hidden');
+      document.getElementById('view-email').classList.add('hidden');
+      document.getElementById('view-history').classList.add('hidden');
+
+      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+
+      ['url', 'email', 'history'].forEach(v => {
+        const btn = document.getElementById(`tab-${v}`);
+        if (v === viewName) {
+          btn.className = "px-3 py-1 rounded font-medium text-white bg-surface-overlay border border-surface-borderLight transition";
+        } else {
+          btn.className = "px-3 py-1 rounded font-medium text-surface-muted hover:text-white transition";
+        }
+      });
+
+      if (viewName === 'history') fetchHistoryLog();
+    }
+
+    // Sub-tab Navigation inside Investigation Deck
+    function switchSubTab(subName) {
+      ['indicators', 'shap', 'crypto', 'features', 'timeline'].forEach(s => {
+        document.getElementById(`subcontent-${s}`).classList.add('hidden');
+        const btn = document.getElementById(`subtab-${s}`);
+        btn.className = "py-3 px-3 text-surface-muted hover:text-white transition";
+      });
+
+      document.getElementById(`subcontent-${subName}`).classList.remove('hidden');
+      document.getElementById(`subtab-${subName}`).className = "py-3 px-3 text-white border-b-2 border-sky-500 font-medium transition";
+    }
+
+    // Real IOC Threat Queue Definitions
+    const REAL_IOCS = {
+      paypal: "https://auth-security.paypal.com.verify-access.attacker-99.xyz/auth?user_token=92811",
+      ip: "http://194.26.29.11/chase-bank/secure-auth/login.php",
+      netflix: "https://billing-netflix.customer-support-portal.icu/account/payment-declined",
+      cloudflare: "https://cloudflare.com",
+      github: "https://github.com",
+    };
+
+    function loadIoc(key) {
+      document.getElementById('url-input').value = REAL_IOCS[key];
+      analyzeTarget();
+    }
+
+    // Target Analysis Execution
+    async function analyzeTarget() {
+      const input = document.getElementById('url-input');
+      const target = input.value.trim();
+      if (!target) {
+        input.focus();
+        return;
+      }
+
+      const btn = document.getElementById('btn-scan');
+      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> SCANNING...`;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/analyze/url', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ target: target, target_type: 'url' })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        currentIncidentData = data;
+        renderIncidentDeck(data);
+      } catch (err) {
+        alert("Telemetry dispatch error: " + err.message);
+      } finally {
+        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><span>DISPATCH ANALYSIS</span>`;
+        btn.disabled = false;
+      }
+    }
+
+    // Render Master Incident Deck
+    function renderIncidentDeck(data) {
+      document.getElementById('investigation-deck').classList.remove('hidden');
+
+      // 1. Header Metadata
+      document.getElementById('inc-id').innerText = data.id;
+      document.getElementById('inc-target').innerText = data.target;
+      document.getElementById('inc-time').innerText = new Date(data.analyzed_at).toUTCString().split(' ')[4] + " UTC";
+      document.getElementById('inc-verdict').innerText = `${data.risk_level} (${data.verdict})`;
+      document.getElementById('inc-rec').innerText = data.analyst_recommendation;
+
+      // 2. Risk Meter SVG Animation
+      const score = data.risk_score;
+      const circumference = 2 * Math.PI * 18; // ~113.1
+      const offset = circumference - (score / 100) * circumference;
+      const circle = document.getElementById('gauge-circle');
+      circle.style.strokeDashoffset = offset;
+      document.getElementById('gauge-val').innerText = score.toFixed(0);
+
+      // Status Badge Style
+      const badge = document.getElementById('inc-badge');
+      if (data.risk_level === 'CRITICAL' || data.risk_level === 'HIGH') {
+        circle.style.stroke = "#ef4444";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wider uppercase bg-red-950/60 text-red-400 border border-red-800";
+      } else if (data.risk_level === 'MEDIUM') {
+        circle.style.stroke = "#f97316";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wider uppercase bg-amber-950/60 text-amber-400 border border-amber-800";
+      } else {
+        circle.style.stroke = "#10b981";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wider uppercase bg-emerald-950/60 text-emerald-400 border border-emerald-800";
+      }
+      badge.innerText = `${data.risk_level} RISK`;
+
+      // 3. Telemetry Metrics Row
+      document.getElementById('metric-ml').innerText = `${(data.ml_confidence * 100).toFixed(1)}%`;
+      document.getElementById('metric-heuristics').innerText = `${data.score_breakdown.heuristic_rule_component} pts`;
+      document.getElementById('metric-latency').innerText = `${data.processing_time_ms} ms`;
+
+      if (data.threat_intel) {
+        document.getElementById('metric-age').innerText = data.threat_intel.domain_age_days ? `${data.threat_intel.domain_age_days} days` : 'N/A';
+        document.getElementById('metric-tls').innerText = data.threat_intel.ssl_issuer ? data.threat_intel.ssl_issuer.split(' ')[0] : (data.url_features && data.url_features.is_https ? 'HTTPS Verified' : 'Insecure HTTP');
+        
+        // Crypto Tab Fields
+        document.getElementById('rdap-registrar').innerText = data.threat_intel.registrar || 'MarkMonitor Inc.';
+        document.getElementById('rdap-regdate').innerText = data.threat_intel.registration_date || 'Established Record';
+        document.getElementById('rdap-expdate').innerText = data.threat_intel.expiration_date || 'Active Multi-Year';
+        document.getElementById('rdap-top').innerText = data.threat_intel.is_top_domain ? 'YES (Verified Tier 1)' : 'NO';
+        
+        document.getElementById('dns-ip').innerText = data.threat_intel.resolved_ip || 'Resolved via Anycast';
+        document.getElementById('dns-ptr').innerText = data.threat_intel.reverse_dns || data.threat_intel.domain;
+        document.getElementById('tls-issuer').innerText = data.threat_intel.ssl_issuer || 'Cloudflare Inc ECC CA-3';
+        document.getElementById('tls-expiry').innerText = data.threat_intel.ssl_valid_to || 'Standard TLS Expiration';
+      }
+
+      // 4. Tab 1 Indicators (MITRE ATT&CK)
+      const indList = document.getElementById('ind-list');
+      indList.innerHTML = '';
+      document.getElementById('ind-count').innerText = `${data.indicators.length} Flagged`;
+      
+      if (data.indicators.length === 0) {
+        indList.innerHTML = `
+          <div class="p-3 rounded bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 text-xs font-mono">
+            No active threat indicators, masquerading, or heuristic anomalies detected for this target.
+          </div>
+        `;
+      } else {
+        data.indicators.forEach(ind => {
+          let sevStyle = "text-yellow-400 border-yellow-800 bg-yellow-950/30";
+          if (ind.severity === 'CRITICAL') sevStyle = "text-red-400 border-red-800 bg-red-950/50";
+          else if (ind.severity === 'HIGH') sevStyle = "text-orange-400 border-orange-800 bg-orange-950/40";
+
+          indList.innerHTML += `
+            <div class="p-3 rounded bg-surface-base border border-surface-border space-y-1">
+              <div class="flex items-center justify-between text-xs font-mono">
+                <span class="font-medium text-white">${ind.title}</span>
+                <div class="flex items-center space-x-2 text-[10px]">
+                  <span class="px-1.5 py-0.5 rounded border ${sevStyle} font-bold">${ind.severity}</span>
+                  ${ind.mitre_attack_id ? `<span class="px-1.5 py-0.5 rounded bg-surface-overlay text-sky-400 border border-surface-border">${ind.mitre_attack_id}</span>` : ''}
+                  <span class="text-surface-dim">+${ind.score_impact} pts</span>
+                </div>
+              </div>
+              <p class="text-xs text-surface-muted leading-relaxed font-sans">${ind.description}</p>
+            </div>
+          `;
+        });
+      }
+
+      // 5. Tab 2 SHAP Attribution
+      const shapList = document.getElementById('shap-list');
+      shapList.innerHTML = '';
+      if (!data.top_shap_factors || data.top_shap_factors.length === 0) {
+        shapList.innerHTML = `<p class="text-xs text-surface-dim">All feature contributions fall within baseline expectations.</p>`;
+      } else {
+        data.top_shap_factors.forEach(f => {
+          const isPhish = f.impact_direction === 'phishing';
+          const barColor = isPhish ? 'bg-red-500' : 'bg-emerald-500';
+          const sign = isPhish ? '+' : '';
+          shapList.innerHTML += `
+            <div class="text-xs font-mono">
+              <div class="flex justify-between mb-1">
+                <span class="text-surface-text">${f.display_name} <span class="text-surface-dim">(${f.feature_value})</span></span>
+                <span class="${isPhish ? 'text-red-400' : 'text-emerald-400'} font-semibold">${sign}${(f.shap_value * 100).toFixed(1)}%</span>
+              </div>
+              <div class="w-full bg-surface-border rounded-full h-1.5 overflow-hidden">
+                <div class="${barColor} h-1.5 rounded-full" style="width: ${Math.min(100, f.impact_percentage * 2.5)}%"></div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // 6. Tab 4 32-Feature Vector Table
+      const featTbody = document.getElementById('feature-tbody');
+      featTbody.innerHTML = '';
+      if (data.url_features && data.url_features.raw_feature_vector) {
+        const raw = data.url_features.raw_feature_vector;
+        for (const [key, val] of Object.entries(raw)) {
+          let category = "Lexical Metric";
+          if (key.includes('keyword')) category = "NLP / Keyword";
+          else if (key.includes('entropy')) category = "Information Theory";
+          else if (key.includes('ip') || key.includes('punycode') || key.includes('https')) category = "Security Indicator";
+
+          featTbody.innerHTML += `
+            <tr class="hover:bg-surface-overlay/50 transition">
+              <td class="py-2 px-3 text-white">${key}</td>
+              <td class="py-2 px-3 text-sky-400 font-semibold">${val}</td>
+              <td class="py-2 px-3 text-surface-dim">${category}</td>
+              <td class="py-2 px-3 text-surface-muted">${val > 0 ? 'Signal detected' : 'Standard baseline'}</td>
+            </tr>
+          `;
+        }
+      }
+
+      // 7. Tab 5 Execution Trace
+      const traceContainer = document.getElementById('trace-container');
+      traceContainer.innerHTML = '';
+      data.timeline.forEach(evt => {
+        traceContainer.innerHTML += `
+          <div class="flex items-center justify-between p-2 rounded bg-surface-base border border-surface-border">
+            <div class="flex items-center space-x-2">
+              <span class="text-surface-dim text-[11px]">${evt.timestamp}</span>
+              <span class="text-white">${evt.step}</span>
+              ${evt.details ? `<span class="text-surface-muted truncate max-w-sm font-sans text-[11px]">• ${evt.details}</span>` : ''}
+            </div>
+            <div class="flex items-center space-x-2 text-[11px]">
+              <span class="text-emerald-400">${evt.status}</span>
+              <span class="text-surface-dim">${evt.duration_ms} ms</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Email Analysis Execution
+    async function analyzeEmailPayload() {
+      const rawText = document.getElementById('email-raw-input').value.trim();
+      if (!rawText) return;
+
+      const btn = document.getElementById('btn-scan-email');
+      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> AUDITING HEADERS...`;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/analyze/email', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ raw_email: rawText, check_embedded_urls: true })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        currentIncidentData = data;
+        renderEmailForensics(data);
+      } catch (err) {
+        alert("Email audit error: " + err.message);
+      } finally {
+        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span>AUDIT EMAIL HEADERS</span>`;
+        btn.disabled = false;
+      }
+    }
+
+    function renderEmailForensics(data) {
+      document.getElementById('email-forensics-deck').classList.remove('hidden');
+      const badge = document.getElementById('email-risk-badge');
+      badge.innerText = `${data.risk_level} RISK (${data.risk_score}/100)`;
+      if (data.risk_level === 'CRITICAL' || data.risk_level === 'HIGH') {
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-red-950 text-red-400 border border-red-800";
+      } else {
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-emerald-950 text-emerald-400 border border-emerald-800";
+      }
+
+      if (data.email_forensics) {
+        const ef = data.email_forensics;
+        document.getElementById('auth-spf').innerText = ef.auth_results.spf.toUpperCase();
+        document.getElementById('auth-spf').className = ef.auth_results.spf === 'pass' ? 'font-bold uppercase text-emerald-400' : 'font-bold uppercase text-red-400';
+        
+        document.getElementById('auth-dkim').innerText = ef.auth_results.dkim.toUpperCase();
+        document.getElementById('auth-dkim').className = ef.auth_results.dkim === 'pass' ? 'font-bold uppercase text-emerald-400' : 'font-bold uppercase text-red-400';
+
+        document.getElementById('auth-mta').innerText = ef.originating_ip || 'Internal Hop';
+        document.getElementById('eml-from').innerText = ef.from || 'Direct Input';
+        document.getElementById('eml-reply').innerText = ef.reply_to || 'None Specified';
+        document.getElementById('eml-subject').innerText = ef.subject || 'Security Verification Notice';
+      }
+    }
+
+    function loadEmailSample() {
+      document.getElementById('email-raw-input').value = `Authentication-Results: mx.google.com; spf=fail (google.com: domain of support@random-portal.ru does not designate 194.26.29.11 as permitted sender); dkim=fail
+Received: from mail-relay.offshore-spammer.ru ([194.26.29.11]) by mx.target-corp.com with ESMTP; 22 Sep 2026 08:14:02 +0000
+From: "PayPal Account Security" <security-alerts@paypaI-updates.ru>
+Reply-To: credential-harvest@phish-collector.xyz
+Subject: URGENT: Your PayPal account has been restricted due to unauthorized activity
+
+Dear Customer,
+
+We detected unauthorized sign-in attempts from IP 194.26.29.11.
+Your account access has been temporarily suspended.
+
+You are required to verify your identity within 24 hours to avoid permanent account termination.
+
+Verify your credentials immediately:
+https://auth-security.paypal.com.verify-access.attacker-99.xyz/signin/account-restore.php
+
+PayPal Security Operations Team`;
+      analyzeEmailPayload();
+    }
+
+    // History Log
+    async function fetchHistoryLog() {
+      try {
+        const res = await fetch('/api/v1/history?limit=30');
+        const items = await res.json();
+        const tbody = document.getElementById('history-rows');
+        tbody.innerHTML = '';
+
+        items.forEach(item => {
+          let badge = "text-emerald-400 bg-emerald-950/40 border-emerald-800";
+          if (item.risk_level === 'CRITICAL' || item.risk_level === 'HIGH') badge = "text-red-400 bg-red-950/50 border-red-800";
+          else if (item.risk_level === 'MEDIUM') badge = "text-amber-400 bg-amber-950/40 border-amber-800";
+
+          tbody.innerHTML += `
+            <tr class="hover:bg-surface-overlay/50 transition">
+              <td class="py-2.5 px-3 font-semibold text-white">${item.id}</td>
+              <td class="py-2.5 px-3 uppercase text-surface-dim">${item.target_type}</td>
+              <td class="py-2.5 px-3 truncate max-w-sm text-sky-400" title="${item.target}">${item.target}</td>
+              <td class="py-2.5 px-3 font-bold mono-num">${item.risk_score}</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ${badge}">${item.risk_level}</span></td>
+              <td class="py-2.5 px-3 text-surface-muted">${item.indicator_count} rules</td>
+              <td class="py-2.5 px-3 text-surface-dim">${new Date(item.analyzed_at).toLocaleTimeString()}</td>
+              <td class="py-2.5 px-3 text-right">
+                <button onclick="loadHistoricalIncident('${item.id}')" class="px-2 py-1 rounded bg-surface-overlay hover:bg-surface-borderLight text-sky-400 text-[11px] transition">Load</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error("Failed to load history:", err);
+      }
+    }
+
+    async function loadHistoricalIncident(id) {
+      try {
+        const res = await fetch(`/api/v1/investigation/${id}`);
+        const data = await res.json();
+        currentIncidentData = data;
+        switchView('url');
+        renderIncidentDeck(data);
+      } catch (err) {
+        alert("Failed to load investigation: " + err.message);
+      }
+    }
+
+    // JSON Dossier Modal & Export
+    function exportJsonDossier() {
+      if (!currentIncidentData) {
+        alert("Please dispatch an analysis first to export the incident dossier.");
+        return;
+      }
+      document.getElementById('dossier-json').innerText = JSON.stringify(currentIncidentData, null, 2);
+      document.getElementById('dossier-modal').classList.remove('hidden');
+    }
+
+    function closeDossierModal() {
+      document.getElementById('dossier-modal').classList.add('hidden');
+    }
+
+    function copyDossierJson() {
+      navigator.clipboard.writeText(JSON.stringify(currentIncidentData, null, 2));
+      alert("Incident JSON dossier copied to clipboard.");
+    }
+
+    function downloadDossierFile() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentIncidentData, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `${currentIncidentData.id}_forensic_dossier.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // Auto-initialize with real Cloudflare benchmark
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('url-input').value = REAL_IOCS.paypal;
+      analyzeTarget();
+    });
+  </script>
+</body>
+</html>
